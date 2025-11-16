@@ -1,101 +1,79 @@
 🤖 AI Resume Screening System
+========================================================================================================================================================================================================================
+
 🌟 Project Overview
-This project implements an Artificial Intelligence-powered system to automate the initial screening of job applications. It uses a Random Forest Classifier trained on a dataset of candidate features and recruiter decisions. The system can process a new resume (in PDF format), extract relevant information like Skills and Certifications, combine them with quantitative metrics (Experience, Projects, Salary Expectation), and predict whether the candidate should be Selected or Rejected by a recruiter for a specified role.
+This project implements an Artificial Intelligence-powered system to automate the initial screening of job applications. It utilizes a Random Forest Classifier trained on a dataset of candidate features and recruiter decisions. The system's capability is to process a new resume (in PDF format), extract crucial information like Skills and Certifications, combine them with quantitative metrics (Experience, Projects, Salary Expectation), and predict whether the candidate should be Selected or Rejected for a specific role.
 
-✨ Features
-PDF Text Extraction: Uses PyPDF2 to read text content directly from a PDF resume file.
+=======================================================================================================================================================================================================================
+✨ Key Features :- 
 
-Intelligent Section Parsing: Employs regular expressions and keyword matching to specifically locate and extract the Skills and Certifications sections from the unstructured resume text.
+[1]. PDF Text Extraction: Reads and extracts text content directly from a PDF resume file using the PyPDF2 library.
 
-Hybrid Feature Engineering: Combines two types of data for prediction:
+[2]. Intelligent Section Parsing: Employs regular expressions and keyword matching to accurately locate and extract content from Skills and Certifications sections.
 
-Text Features: Skills and Certifications are vectorized using TF-IDF.
+[3]. Hybrid Feature Engineering: Combines two distinct feature types for a robust prediction:
 
-Numeric Features: Experience, Projects Count, and Salary Expectation are standardized using StandardScaler.
+[4]. Text Features: Skills and Certifications are converted to numerical data using TF-IDF Vectorization.
 
-Predictive Model: A Random Forest Classifier is trained to predict the recruiter's decision with high accuracy (achieved 94.50% in the provided notebook).
+[5]. Numeric Features: Experience (Years), Projects Count, and Salary Expectation are normalized using StandardScaler.
 
-User Interaction: Prompts the user to select the job role and input numeric details, offering a complete end-to-end screening simulation.
+[6]. Predictive Model: Uses a Random Forest Classifier which demonstrated high performance, achieving an accuracy of approximately 94.50% on the test set.
 
+[7]. Interactive Screening: Guides the user through selecting a job role and inputting quantitative details to simulate a complete screening process.
+
+=====================================================================================================================================================================================================================
 🛠️ Setup and Installation
 Prerequisites
-You need a Python environment, preferably using Jupyter Notebook or Google Colab where the original code was developed.
+Python (3.x recommended)
+
+Jupyter Notebook or Google Colab environment.
 
 Dependencies
-Install the required libraries using pip:
+Install the necessary Python packages using pip:
 
 Bash
+
 !pip install pandas scikit-learn numpy PyPDF2
-Data Requirement
-This system relies on a training dataset. Ensure you have the file AI_Resume_Screening.csv in the same directory (or path) as your notebook. This CSV file is expected to contain the following columns:
 
-Column Name	Type	Description
-Skills	Text	List of candidate skills
-Certifications	Text	List of candidate certifications
-Experience (Years)	Numeric	Candidate's total years of experience
-Projects Count	Numeric	Number of projects listed on the resume
-Salary Expectation ($)	Numeric	Candidate's expected salary
-Recruiter Decision	Target	The outcome (0 for Rejected, 1 for Selected)
+=====================================================================================================================================================================================================================
+
 💻 Code Architecture and Logic
-The script is logically organized into nine main sections.
+The script follows a structured workflow to handle data preparation, model training, and real-time inference.
 
-1. Load & Prepare Dataset
-The AI_Resume_Screening.csv is loaded.
+1. Data Loading and Preprocessing
+Loads the CSV dataset and handles missing values.
 
-Missing values in Skills are filled with an empty string (''), and in Certifications with 'NA'.
+Creates a combined text feature: df['Text_Feature'] = df['Skills'] + " " + df['Certifications'].
 
-A combined text feature, Text_Feature, is created by concatenating Skills and Certifications.
+2. Feature TransformationText Vectorization:
+   A TfidfVectorizer (with max_features=1000 and stop_words='english') is fitted to the combined text feature.
+   Numeric Scaling: A StandardScaler is fitted to the numeric features.
+   The transformed features are horizontally stacked (hstack) to create the final input matrix $\mathbf{X}$.
 
-The three numeric features are identified.
+3. Model Training
+The data is split using train_test_split (80% train, 20% test, with stratify=y).
 
-2. Text Vectorization and Feature Scaling
-TF-IDF: A TfidfVectorizer is applied to the Text_Feature to convert words into a numerical representation, limited to the top 1000 features (max_features=1000).
+A RandomForestClassifier is trained using optimized settings (n_estimators=200, max_depth=20, class_weight='balanced').
 
-Scaling: A StandardScaler is fitted to the numeric features (Experience, Projects Count, Salary Expectation) to normalize their scale.
+The model's performance is validated, achieving high Model Accuracy.
 
-Feature Combination: The text features (X_text) and the scaled numeric features (X_num) are combined horizontally using scipy.sparse.hstack to create the final feature matrix X.
+4. Resume Feature Extraction (Live Resume)
+extract_text_from_pdf: Reads the raw text from the uploaded PDF.
 
-3. Train Model
-The data is split into training and testing sets (80/20 split, stratified on the target variable y).
+clean_text: Cleans the raw text to standardize formatting.
 
-A RandomForestClassifier is initialized with key hyperparameters: n_estimators=200, max_depth=20, and class_weight='balanced' (to handle potential class imbalance).
+extract_section: Uses defined keywords (SKILLS_KEYWORDS, CERT_KEYWORDS, STOP_KEYWORDS) to intelligently segment the resume and extract the relevant text blocks.
 
-The model is trained on the training data and evaluated, achieving approximately 94.50% accuracy on the test set.
+5. Prediction and ResultsNew Feature Vector Creation: The extracted text is transformed using the fitted TF-IDF Vectorizer, and the user inputs are transformed using the fitted StandardScaler.
+    The new features are stacked to create the input vector $\mathbf{X}_{\text{new}}$.
+    The Random Forest Model makes a prediction on $\mathbf{X}_{\text{new}}$, outputting the final Decision and the Confidence score.
 
-4. Extract Text from PDF
-The extract_text_from_pdf function uses PyPDF2.PdfReader to iterate through all pages of the uploaded PDF file and return the aggregated raw text.
-
-The clean_text function performs basic text normalization by replacing bullets/hyphens with newlines, removing excessive whitespace, and eliminating most special characters.
-
-5. Extract Resume Sections
-The core extraction logic resides in extract_section. It identifies a section by searching for a list of predefined section_keywords (e.g., "skills", "certifications").
-
-The section content is defined as the text between the start keyword and the first occurrence of a stop_keywords (e.g., "education", "experience") to cleanly segment the resume.
-
-The extracted content is further cleaned and returned.
-
-6. Upload & Process Resume (Runtime)
-This section uses google.colab.files.upload() to facilitate uploading a new PDF resume.
-
-The text is extracted, cleaned, and then section extraction functions (for skills and certifications) are called.
-
-The extracted lists are printed for validation.
-
-7. Collect User Input (Runtime)
-The user is prompted to select a target Job Role (e.g., Data Scientist) and input their Years of Experience, Number of Projects, and Salary Expectation.
-
-8. Prepare Features & Predict
-The newly extracted skills and certifications are joined into a single text string.
-
-The trained TF-IDF vectorizer is used to transform the new text features (X_text_new).
-
-The trained StandardScaler is used to transform the new numeric features (X_num_new).
-
-All features are stacked (hstack) into the final input vector X_new.
-
-The trained model makes the final prediction, and the confidence level (predict_proba) is calculated.
-
-9. Display Results
-The final prediction is presented clearly, showing the Applied Role, the Decision (✅ SELECTED or ❌ REJECTED), and the model's Confidence level.
-
-The key features used for the prediction (top extracted skills, certifications, experience, and salary expectation) are also displayed.
+=====================================================================================================================================================================================================================
+▶️ How to Run the System
+[1].Execute the Notebook: Run all cells in sequential order.
+[2].Upload Resume: The script will prompt you to upload a PDF file for screening.
+[3].Enter Details: You will be prompted to select a job role (1-4) and input the numeric details:
+Years of Experience
+Number of Projects
+Salary Expectation ($)
+[4]. View Results: The system will process the data, make a prediction, and display the final formatted PREDICTION RESULTS, including the decision, confidence, and key detected features.
